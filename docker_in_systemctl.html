@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced Guide: Running systemctl Inside Docker</title>
+<style>
+  body { font-family: 'Inter', sans-serif; margin: 0; background: #eef2f5; color: #333; }
+  header { background: linear-gradient(90deg, #0f2027, #203a43, #2c5364); color: white; padding: 3rem 1rem; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+  main { max-width: 1200px; margin: 2rem auto; background: white; padding: 3rem; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
+  h1, h2, h3 { color: #203a43; margin-top: 0; }
+  p { line-height: 1.8; }
+  code, pre { background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 8px; display: block; overflow-x: auto; font-size: 0.95rem; }
+  .tip, .warning, .note { border-left: 5px solid; padding: 1rem; margin: 1.5rem 0; border-radius: 6px; }
+  .tip { background: #e3f4ff; border-color: #0072ff; }
+  .warning { background: #fff5e6; border-color: #ff9800; }
+  .note { background: #f3e5f5; border-color: #9c27b0; }
+  .section-divider { border-top: 2px dashed #ccc; margin: 2.5rem 0; }
+  ul { margin: 1rem 0; padding-left: 1.5rem; }
+  li { margin-bottom: 0.6rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Running systemctl Inside Docker: The Advanced Guide</h1>
+  <p>Step-by-step instructions, best practices, and deep insights into enabling systemd in Docker containers.</p>
+</header>
+<main>
+  <h2>Why Would You Need systemctl in Docker?</h2>
+  <p>Most Docker containers are designed to run a single process and avoid full init systems like <code>systemd</code>. However, certain workloads—such as complex service orchestration, testing systemd units, or running legacy applications—require full systemd support inside a container.</p>
+
+  <div class="section-divider"></div>
+
+  <h2>Method 1: Privileged Container with systemd</h2>
+  <pre><code>docker run -it --privileged \
+  --cgroupns=host \
+  -v /sys/fs/cgroup:/sys/fs/cgroup:rw \
+  my-systemd-image /sbin/init</code></pre>
+  <p>This approach allows full systemd operation inside the container by providing direct access to cgroups.</p>
+  <div class="warning"><strong>Security Warning:</strong> Privileged mode gives broad access to the host. Avoid in multi-tenant or untrusted environments.</div>
+
+  <div class="section-divider"></div>
+
+  <h2>Method 2: Docker-in-Docker (DinD) with systemd</h2>
+  <pre><code>docker run -d --privileged \
+  --name dind-systemd \
+  docker:dind</code></pre>
+  <p>Combining DinD with systemd is useful for CI/CD pipelines that require nested Docker and service management capabilities.</p>
+
+  <div class="section-divider"></div>
+
+  <h2>Dockerfile Example for systemd</h2>
+  <pre><code>FROM ubuntu:22.04
+RUN apt-get update && \
+    apt-get install -y systemd systemd-sysv && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+VOLUME [ "/sys/fs/cgroup" ]
+CMD ["/sbin/init"]</code></pre>
+  <div class="tip"><strong>Pro Tip:</strong> Use <code>docker stop</code> to gracefully shut down systemd-managed containers.</div>
+
+  <div class="section-divider"></div>
+
+  <h2>Debugging and Maintenance</h2>
+  <ul>
+    <li>Check logs with <code>journalctl</code> inside the container.</li>
+    <li>Ensure the container has the correct cgroup drivers matching the host.</li>
+    <li>Test service dependencies before deploying to production.</li>
+  </ul>
+
+  <div class="note"><strong>Note:</strong> For lightweight service management, consider alternatives like supervisord or s6-overlay to avoid systemd complexity.</div>
+
+  <h2>Conclusion</h2>
+  <p>Running <code>systemctl</code> inside Docker unlocks advanced service orchestration capabilities but comes with security and resource trade-offs. Choose the right approach based on your workload, environment, and risk tolerance.</p>
+</main>
+</body>
+</html>
