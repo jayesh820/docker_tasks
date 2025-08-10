@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Running GUI Applications from Docker Containers</title>
+<style>
+  body { font-family: 'Segoe UI', Tahoma, sans-serif; line-height: 1.7; margin: 0; background: #f5f5f5; }
+  header { background: linear-gradient(90deg, #2196F3, #0D47A1); color: white; padding: 2rem; text-align: center; }
+  main { max-width: 1100px; margin: auto; background: white; padding: 2.5rem; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+  h1, h2, h3 { color: #2196F3; }
+  code, pre { background: #272822; color: #f8f8f2; padding: 0.8rem; border-radius: 6px; display: block; overflow-x: auto; font-family: 'Courier New', monospace; }
+  .tip, .warning { border-left: 5px solid; padding: 1rem; margin: 1.5rem 0; border-radius: 5px; }
+  .tip { background: #E3F2FD; border-color: #2196F3; }
+  .warning { background: #FFF3E0; border-color: #FF9800; }
+  .section-divider { border-top: 2px dashed #ccc; margin: 2.5rem 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Run Graphical Applications from Docker</h1>
+  <p>Learn how to display and interact with GUI software running inside Docker containers</p>
+</header>
+<main>
+  <h2>Introduction</h2>
+  <p>While Docker is primarily used for headless, server-style workloads, you can run full graphical applications inside containers. By configuring X11 forwarding or using VNC/noVNC, you can launch and interact with GUI-based software securely and efficiently.</p>
+  
+  <div class="section-divider"></div>
+
+  <h2>Option 1: Using X11 Forwarding (Linux)</h2>
+  <pre><code>xhost +local:docker
+
+# Run container with X11 socket mounted
+docker run -it --rm \
+  -e DISPLAY=$DISPLAY \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  my-gui-image</code></pre>
+  <p>This method lets the container connect to your host's display server. It’s lightweight but only works locally and needs proper <code>xhost</code> permissions.</p>
+
+  <div class="tip">
+    <strong>Pro Tip:</strong> Use <code>xhost +SI:localuser:username</code> instead of <code>xhost +</code> to grant access more securely.
+  </div>
+
+  <div class="section-divider"></div>
+
+  <h2>Option 2: Using VNC or noVNC</h2>
+  <p>With VNC, the GUI runs in a virtual desktop inside the container, accessible via a VNC client or browser.</p>
+  <pre><code>docker run -p 5901:5901 -p 6080:6080 my-vnc-image</code></pre>
+  <ul>
+    <li><strong>VNC Client:</strong> Connect to <code>localhost:5901</code></li>
+    <li><strong>noVNC:</strong> Open <code>http://localhost:6080</code> in a browser</li>
+  </ul>
+
+  <div class="section-divider"></div>
+
+  <h2>Option 3: Xpra for Persistent Sessions</h2>
+  <p><a href="https://xpra.org/">Xpra</a> allows seamless, persistent GUI sessions with better performance than VNC for certain apps.</p>
+
+  <div class="section-divider"></div>
+
+  <h2>Example: Running Firefox in Docker</h2>
+  <pre><code>docker run -it --rm \
+  -e DISPLAY=$DISPLAY \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  jess/firefox</code></pre>
+  <p>With VNC, you could use an image like <code>dorowu/ubuntu-desktop-lxde-vnc</code> and install Firefox inside.</p>
+
+  <div class="warning">
+    <strong>Security Note:</strong> Avoid exposing VNC ports directly to the internet without authentication and encryption.
+  </div>
+
+  <div class="section-divider"></div>
+
+  <h2>Best Practices</h2>
+  <ul>
+    <li>Limit container permissions (avoid <code>--privileged</code> unless necessary).</li>
+    <li>Use non-root users in containers when running GUI apps.</li>
+    <li>Leverage Docker volumes for persistent configuration and profiles.</li>
+    <li>Restrict network exposure for VNC/noVNC services.</li>
+  </ul>
+
+  <h2>Conclusion</h2>
+  <p>Running GUI apps in Docker is a powerful way to sandbox complex software, test across environments, and streamline development workflows. Whether you choose X11, VNC, or Xpra, you can enjoy full desktop experiences within containers with the right setup.</p>
+</main>
+</body>
+</html>
