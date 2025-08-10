@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enable Sound Card Access in Docker Containers</title>
+<style>
+  body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f0f2f5; color: #333; }
+  header { background: linear-gradient(90deg, #00b09b, #96c93d); color: white; padding: 2rem 1rem; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+  main { max-width: 1100px; margin: 2rem auto; background: white; padding: 2.5rem; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+  h1, h2, h3 { color: #00b09b; margin-top: 0; }
+  p { line-height: 1.7; }
+  code, pre { background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 8px; display: block; overflow-x: auto; font-size: 0.95rem; }
+  .tip, .warning { border-left: 5px solid; padding: 1rem; margin: 1.5rem 0; border-radius: 6px; }
+  .tip { background: #e0f7f4; border-color: #00b09b; }
+  .warning { background: #fff5e6; border-color: #ff9800; }
+  .section-divider { border-top: 2px dashed #ccc; margin: 2.5rem 0; }
+  ul { margin: 1rem 0; padding-left: 1.5rem; }
+  li { margin-bottom: 0.5rem; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Enable Sound Card Access in Docker</h1>
+  <p>Master ALSA and PulseAudio passthrough to give full audio support to your Dockerized applications.</p>
+</header>
+<main>
+  <h2>Why Audio in Docker?</h2>
+  <p>By default, Docker containers are isolated from host audio hardware. However, applications like VLC, Zoom, or even browser-based conferencing tools need sound input/output. With proper configuration, you can enable audio without sacrificing security or performance.</p>
+
+  <div class="section-divider"></div>
+
+  <h2>Method 1: ALSA Passthrough (Linux)</h2>
+  <pre><code># Run container with direct access to ALSA
+sudo docker run -it --rm \
+  --device /dev/snd \
+  my-audio-image</code></pre>
+  <p>This method mounts your host's sound device directly. Ensure ALSA libraries are installed in your image.</p>
+  <div class="tip"><strong>Pro Tip:</strong> Run <code>aplay -l</code> on the host to list audio devices.</div>
+
+  <div class="section-divider"></div>
+
+  <h2>Method 2: PulseAudio Socket</h2>
+  <pre><code># Allow container to connect via PulseAudio socket
+pactl load-module module-native-protocol-tcp auth-ip-acl=127.0.0.1 auth-anonymous=1
+
+docker run -it --rm \
+  -e PULSE_SERVER=host.docker.internal \
+  -v /run/user/$(id -u)/pulse:/run/user/$(id -u)/pulse \
+  my-audio-image</code></pre>
+  <p>PulseAudio is more flexible and works in cross-platform setups, including combining audio with GUI applications.</p>
+
+  <div class="section-divider"></div>
+
+  <h2>Method 3: GUI + Audio</h2>
+  <pre><code>docker run -it --rm \
+  --device /dev/snd \
+  -e DISPLAY=$DISPLAY \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  my-gui-audio-image</code></pre>
+  <p>Perfect for multimedia apps like Firefox or video conferencing tools inside Docker.</p>
+
+  <div class="warning"><strong>Security Note:</strong> Be cautious when exposing PulseAudio over TCP. Use firewall rules to limit access.</div>
+
+  <div class="section-divider"></div>
+
+  <h2>Best Practices</h2>
+  <ul>
+    <li>Run containers as non-root users for audio apps.</li>
+    <li>Limit device access strictly to <code>/dev/snd</code> if possible.</li>
+    <li>Use volume mounts for persistent PulseAudio configs.</li>
+    <li>Fine-tune buffer sizes for real-time audio work.</li>
+  </ul>
+
+  <h2>Conclusion</h2>
+  <p>Enabling audio in Docker containers opens up possibilities for streaming, media playback, conferencing, and more—all inside isolated, reproducible environments.</p>
+</main>
+</body>
+</html>
