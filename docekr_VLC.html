@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Run VLC in Docker (with GUI & Audio) — Advanced Guide</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#071026;--card:#071323;--muted:#9fb3c8;--accent:#ff6b6b;--accent2:#6ee7b7;--glass:rgba(255,255,255,0.03)}
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#041225 0%, #071026 100%);color:#e7f2fb;margin:0;padding:32px}
+    .wrap{max-width:1200px;margin:0 auto}
+    header{display:flex;align-items:center;gap:18px;margin-bottom:22px}
+    .logo{width:68px;height:68px;border-radius:14px;background:linear-gradient(135deg,var(--accent2),var(--accent));display:flex;align-items:center;justify-content:center;font-weight:800;color:#071023;font-size:20px}
+    header h1{font-size:22px;margin:0}
+    header p{margin:0;color:var(--muted);font-size:13px}
+
+    .hero{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);padding:22px;border-radius:14px;margin-bottom:20px;box-shadow:0 10px 40px rgba(3,8,20,0.6)}
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:22px}
+    .card{background:var(--card);border-radius:12px;padding:20px}
+    .muted{color:var(--muted)}
+    .pill{background:var(--glass);padding:8px 12px;border-radius:999px;color:var(--muted);font-weight:700;font-size:13px}
+    .meta{display:flex;gap:10px;align-items:center}
+    h2{margin-top:18px}
+    pre{background:#021025;color:#d8f2ff;padding:14px;border-radius:8px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+    code{background:rgba(255,255,255,0.03);padding:2px 6px;border-radius:6px}
+    .note{background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.01));padding:12px;border-left:4px solid #f59e0b;border-radius:6px;color:#fff;margin:12px 0}
+    .success{border-left:4px solid #10b981}
+    .danger{border-left:4px solid #ef4444}
+    nav.toc{position:sticky;top:28px}
+
+    .section-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;background:linear-gradient(90deg,var(--accent2),#7c3aed);color:#071023;font-weight:800;border:none;cursor:pointer}
+
+    .footer{color:var(--muted);margin-top:22px;font-size:13px}
+
+    @media(max-width:980px){.grid{grid-template-columns:1fr}.toc{position:static}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">VLC</div>
+      <div>
+        <h1>Play VLC inside Docker (GUI + Audio)</h1>
+        <p class="muted">Comprehensive, production-minded guide — run VLC with X11 or noVNC (VNC), audio forwarding (PulseAudio), GPU acceleration options, and secure deployment patterns.</p>
+      </div>
+    </header>
+
+    <div class="hero card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <strong style="font-size:16px">What this guide covers</strong>
+          <div class="muted">Step-by-step instructions, ready-to-use Dockerfile, start scripts, docker-compose, audio and GPU passthrough, troubleshooting and security best practices.</div>
+        </div>
+        <div class="meta">
+          <div class="pill">Ubuntu 22.04</div>
+          <div class="pill">VLC 4+</div>
+          <div class="pill">noVNC / X11 / PulseAudio</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <main>
+        <article class="card">
+          <h2 id="intro">Introduction</h2>
+          <p class="muted">Running a media player like VLC inside Docker is useful for sandboxed media playback, automated visual tests, media-demos, and remote access to a media environment. Key challenges are handling GUI display and audio forwarding — this guide provides robust solutions for both.</p>
+
+          <h2 id="approaches">Display & Audio Approaches</h2>
+          <ul>
+            <li><strong>X11 (Linux host):</strong> Low latency, native experience by sharing the host X socket. Best for Linux desktop hosts.</li>
+            <li><strong>noVNC / VNC:</strong> Portable, cross-platform. Access VLC through browser (noVNC) or VNC client.</li>
+            <li><strong>Audio:</strong> PulseAudio socket forwarding or ALSA passthrough. PulseAudio is most cross-platform-friendly.</li>
+            <li><strong>GPU acceleration (optional):</strong> Use GPU passthrough or Docker's --gpus option for hardware decoding when available.</li>
+          </ul>
+
+          <h2 id="quick-start-novnc">Quick Start — noVNC (recommended for portability)</h2>
+          <p class="muted">This setup runs VLC inside a container with Xvfb + fluxbox + TigerVNC and exposes a browser-accessible noVNC at <code>http://localhost:6080</code>. Audio is forwarded via PulseAudio socket.</p>
+
+          <h3>1) Dockerfile (noVNC + PulseAudio)</h3>
+          <pre><code># Dockerfile
+FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install VLC, X, VNC, and supporting tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    vlc \
+    xvfb fluxbox \
+    tigervnc-standalone-server tigervnc-common \
+    x11vnc xauth \
+    pulseaudio pulseaudio-utils \
+    wget ca-certificates curl \
+ && rm -rf /var/lib/apt/lists/*
+
+# Install noVNC
+RUN mkdir -p /opt/novnc && \
+    wget -qO- https://github.com/novnc/noVNC/archive/refs/heads/master.tar.gz | tar xz --strip-components=1 -C /opt/novnc && \
+    wget -qO- https://github.com/novnc/websockify/archive/refs/heads/master.tar.gz | tar xz --strip-components=1 -C /opt/novnc/utils/websockify
+
+# Create user
+RUN useradd -m -s /bin/bash videouser
+USER videouser
+WORKDIR /home/videouser
+
+COPY --chown=videouser:videouser start.sh ./start.sh
+RUN chmod +x ./start.sh
+EXPOSE 5901 6080
+CMD ["./start.sh"]
+</code></pre>
+
+          <h3>2) start.sh (noVNC + PulseAudio forwarding)</h3>
+          <pre><code>#!/bin/bash
+set -e
+HOME=/home/videouser
+export HOME
+export DISPLAY=:1
+
+# Start virtual framebuffer
+Xvfb :1 -screen 0 1366x768x24 &
+
+# Start a lightweight window manager
+fluxbox &
+
+# Start PulseAudio in system or use host socket when mounted
+if [ -S /run/user/1000/pulse/native ]; then
+  echo "Using host PulseAudio socket"
+else
+  pulseaudio --start
+fi
+
+# Start TigerVNC
+mkdir -p $HOME/.vnc
+if [ ! -f $HOME/.vnc/passwd ]; then
+  echo "vncpassword" | vncpasswd -f > $HOME/.vnc/passwd
+  chmod 600 $HOME/.vnc/passwd
+fi
+vncserver :1 -geometry 1366x768 -depth 24
+
+# Start noVNC
+/opt/novnc/utils/novnc_proxy --vnc localhost:5901 --listen 6080 &
+
+# Launch VLC (no video output until display available)
+vlc --intf qt --no-snapshot-preview &
+
+wait -n
+</code></pre>
+
+          <h3>3) Run (with PulseAudio socket from host)</h3>
+          <pre><code>docker build -t vlc-novnc .
+
+docker run -d --name vlc-novnc \
+  -p 6080:6080 -p 5901:5901 \
+  -v /run/user/1000/pulse/native:/run/pulse/native \
+  -e PULSE_SERVER=unix:/run/pulse/native \
+  -v $(pwd)/media:/home/videouser/media \
+  vlc-novnc
+
+# Open http://localhost:6080 and play files from /home/videouser/media
+</code></pre>
+
+          <div class="note success">
+            <strong>Note:</strong> On many Linux systems the PulseAudio socket path is <code>/run/user/$(id -u)/pulse/native</code>. Replace <code>1000</code> with your UID. For macOS/Windows, use PulseAudio over TCP or run PulseAudio clients on host.
+          </div>
+
+          <h2 id="x11">X11 Forwarding (Best for native performance on Linux)</h2>
+          <p class="muted">If your host is Linux, running the container with host X socket gives the best display performance and easier audio forwarding.</p>
+          <pre><code># Run with host X socket and PulseAudio
+xhost +local:docker
+
+docker run -it --rm \
+  -e DISPLAY=$DISPLAY \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  -v $HOME/.Xauthority:/home/videouser/.Xauthority:ro \
+  -v /run/user/1000/pulse/native:/run/pulse/native \
+  -e PULSE_SERVER=unix:/run/pulse/native \
+  -v $(pwd)/media:/home/videouser/media \
+  --name vlc-x11 vlc-image \
+  /bin/bash -c "apt update && apt install -y vlc && vlc"
+</code></pre>
+
+          <div class="note danger">
+            <strong>Security:</strong> Mounting the X11 socket and .Xauthority gives the container access to your host desktop. Use only on trusted systems or consider user namespaces and limited capabilities.
+          </div>
+
+          <h2 id="gpu">GPU Acceleration (optional)</h2>
+          <p class="muted">Hardware decoding can greatly improve playback performance. Depending on your GPU, use either:</p>
+          <ul>
+            <li><strong>NVIDIA:</strong> Use the <code>--gpus</code> option and the NVIDIA Container Toolkit. Pass through devices and install <code>nvidia-driver</code> in host.</li>
+            <li><strong>Intel iGPU:</strong> Mount <code>/dev/dri</code> into the container for VA-API.</li>
+          </ul>
+          <pre><code># Example: Intel iGPU passthrough (host)
+docker run -it --rm \
+  --device /dev/dri:/dev/dri \
+  -e DISPLAY=$DISPLAY \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  vlc-gpu
+</code></pre>
+
+          <h2 id="docker-compose">Docker Compose (noVNC + PulseAudio)</h2>
+          <pre><code>version: '3.8'
+services:
+  vlc:
+    build: .
+    ports:
+      - "6080:6080"
+      - "5901:5901"
+    volumes:
+      - ./media:/home/videouser/media
+      - /run/user/1000/pulse/native:/run/pulse/native
+    environment:
+      - PULSE_SERVER=unix:/run/pulse/native
+    restart: unless-stopped
+</code></pre>
+
+          <h2 id="security">Security & Production Hardening</h2>
+          <ul>
+            <li>Do <strong>not</strong> expose VNC to the public internet without TLS and authentication. Use Nginx/Traefik as reverse proxy with TLS and basic auth or OAuth.</li>
+            <li>Use non-root user inside container. Drop capabilities: <code>--cap-drop=ALL</code>.</li>
+            <li>Use user namespaces and least-privilege mounts. Avoid mounting sensitive host paths unless required.</li>
+            <li>Use secrets managers for passwords; don’t hardcode VNC passwords in images.</li>
+          </ul>
+
+          <h2 id="troubleshooting">Troubleshooting</h2>
+          <ul>
+            <li><strong>No audio:</strong> Confirm PulseAudio socket path and <code>PULSE_SERVER</code> env var. Use <code>pavucontrol</code> to route audio.</li>
+            <li><strong>Black video window:</strong> Ensure Xvfb or host X is running and that the window manager is started (fluxbox/openbox).</li>
+            <li><strong>High CPU:</strong> Enable hardware decoding (VA-API/NVIDIA) or reduce video resolution.</li>
+            <li><strong>File not found:</strong> Verify media is mounted into container and proper permissions exist.</li>
+          </ul>
+
+          <h2 id="extras">Extras & Automation</h2>
+          <p class="muted">You can automate playback with VLC command-line options (e.g. <code>cvlc</code> or <code>vlc --intf dummy --play-and-exit</code>) to run headless playback for screenshots or streaming. Integrate with a CI system to run media processing pipelines inside containers.</p>
+
+          <h2 id="wrap">Wrap-up & Next Steps</h2>
+          <p class="muted">This guide equips you to run VLC inside Docker with GUI and audio. For next steps I can:</p>
+          <ul>
+            <li>Generate a GitHub-ready repo with <code>Dockerfile</code>, <code>start.sh</code>, and <code>docker-compose.yml</code>.</li>
+            <li>Add a secure Nginx + Let's Encrypt pattern for noVNC access over HTTPS.</li>
+            <li>Produce a GPU-enabled image (NVIDIA / Intel) with sample media and instructions.</li>
+          </ul>
+
+          <div class="footer">Tell me which one you want and I’ll generate the files ready for copy/paste or a downloadable ZIP.</div>
+        </article>
+      </main>
+
+      <aside class="card toc">
+        <div>
+          <h3>Contents</h3>
+          <ul>
+            <li><a href="#intro">Introduction</a></li>
+            <li><a href="#approaches">Display & Audio Approaches</a></li>
+            <li><a href="#quick-start-novnc">Quick Start (noVNC)</a></li>
+            <li><a href="#x11">X11 Forwarding</a></li>
+            <li><a href="#gpu">GPU Acceleration</a></li>
+            <li><a href="#docker-compose">Docker Compose</a></li>
+            <li><a href="#security">Security</a></li>
+            <li><a href="#troubleshooting">Troubleshooting</a></li>
+            <li><a href="#extras">Extras</a></li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>

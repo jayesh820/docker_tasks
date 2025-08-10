@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Run Firefox in Docker (GUI) — Guide & Ready-to-Use Files</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#9aa7bd;--accent:#7c3aed;--glass:rgba(255,255,255,0.04)}
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#071126 0%, #07193a 100%);color:#e6eef8;margin:0;padding:32px}
+    .wrap{max-width:1100px;margin:0 auto}
+    header{display:flex;align-items:center;gap:18px;margin-bottom:22px}
+    header .logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,#5eead4,#7c3aed);display:flex;align-items:center;justify-content:center;font-weight:700;color:#051025}
+    header h1{font-size:20px;margin:0}
+    header p{margin:0;color:var(--muted);font-size:13px}
+
+    .hero{background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);padding:22px;border-radius:14px;margin-bottom:20px;box-shadow:0 8px 30px rgba(2,6,23,0.6)}
+    .grid{display:grid;grid-template-columns:1fr 340px;gap:20px}
+
+    .card{background:var(--card);border-radius:12px;padding:18px}
+    .muted{color:var(--muted)}
+
+    nav.toc{position:sticky;top:28px}
+    .toc h3{margin:0 0 12px 0}
+    .toc ul{list-style:none;padding:0;margin:0}
+    .toc li{margin:8px 0}
+    .toc a{color:#cfe9ff;text-decoration:none;font-size:14px}
+
+    h2{margin-top:18px}
+    pre{background:#020617;color:#d8f0ff;padding:14px;border-radius:8px;overflow:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+    code{background:rgba(255,255,255,0.03);padding:2px 6px;border-radius:6px}
+
+    .kbd{background:#07112a;border:1px solid rgba(255,255,255,0.03);padding:6px 8px;border-radius:6px;font-weight:600}
+
+    .meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .meta .pill{background:var(--glass);padding:8px 10px;border-radius:999px;color:var(--muted);font-weight:600;font-size:13px}
+
+    .footer{color:var(--muted);margin-top:22px;font-size:13px}
+
+    .note{background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:12px;border-left:4px solid #f97316;border-radius:6px;color:#fff;margin:12px 0}
+
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;background:linear-gradient(90deg,#22c1c3,#7b61ff);color:#051025;font-weight:700;border:none;cursor:pointer}
+
+    .section-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+    @media(max-width:980px){.grid{grid-template-columns:1fr}.toc{position:static}
+      .section-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">FX</div>
+      <div>
+        <h1>Run Firefox in Docker (with GUI)</h1>
+        <p class="muted">Portable, secure, cross-platform guide — noVNC, X11, Compose files, Selenium integration, and production hardening.</p>
+      </div>
+    </header>
+
+    <div class="hero card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <strong style="font-size:16px">What you'll get</strong>
+          <div class="muted">A polished, ready-to-run Docker setup for Firefox with GUI access (via noVNC) and optional X11 forwarding. Includes best practices for security and CI use.</div>
+        </div>
+        <div class="meta">
+          <div class="pill">Ubuntu 22.04</div>
+          <div class="pill">Firefox 121+</div>
+          <div class="pill">noVNC + TigerVNC</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <main>
+        <article class="card">
+          <h2 id="intro">Introduction</h2>
+          <p class="muted">Running GUI apps inside containers enables isolated browser environments for testing, secure browsing, demoing features, and automating UI tasks. This guide focuses on a robust, production-minded noVNC setup and also covers X11 forwarding for Linux hosts.</p>
+
+          <h2 id="quick-start">Quick Start (Recommended: noVNC)</h2>
+          <p>Copy these files into a folder (<code>firefox-docker/</code>) and run. This quick start is ideal for local testing.</p>
+
+          <h3>1) Dockerfile (ready-for-production base)</h3>
+          <pre><code># Dockerfile
+FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install essentials and Firefox
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+    firefox \
+    x11vnc xvfb \
+    tigervnc-standalone-server tigervnc-common \
+    fluxbox \
+    ca-certificates wget curl gnupg \
+    pulseaudio \
+ && rm -rf /var/lib/apt/lists/*
+
+# Install noVNC (lightweight web client)
+RUN mkdir -p /opt/novnc && \
+    wget -qO- https://github.com/novnc/noVNC/archive/refs/heads/master.tar.gz | tar xz --strip-components=1 -C /opt/novnc && \
+    wget -qO- https://github.com/novnc/websockify/archive/refs/heads/master.tar.gz | tar xz --strip-components=1 -C /opt/novnc/utils/websockify
+
+# Create non-root user
+RUN useradd -m -s /bin/bash firefoxuser
+USER firefoxuser
+WORKDIR /home/firefoxuser
+
+COPY --chown=firefoxuser:firefoxuser start.sh ./start.sh
+RUN chmod +x ./start.sh
+EXPOSE 5901 6080
+CMD ["./start.sh"]
+</code></pre>
+
+          <h3>2) start.sh (robust start script)</h3>
+          <pre><code>#!/bin/bash
+set -e
+# start.sh - starts Xvfb, window manager, VNC server and noVNC
+export HOME=/home/firefoxuser
+export DISPLAY=:1
+
+# start Xvfb for a virtual display
+Xvfb :1 -screen 0 1280x900x24 &
+
+# start lightweight window manager
+fluxbox &
+
+# setup VNC password (use secure method for prod)
+mkdir -p $HOME/.vnc
+if [ ! -f $HOME/.vnc/passwd ]; then
+  echo "password" | vncpasswd -f > $HOME/.vnc/passwd
+  chmod 600 $HOME/.vnc/passwd
+fi
+
+# start tigervnc server
+vncserver :1 -geometry 1280x900 -depth 24
+
+# start noVNC websockify
+/opt/novnc/utils/novnc_proxy --vnc localhost:5901 --listen 6080 &
+
+# give firefox a fixed profile dir for persistence
+mkdir -p $HOME/.mozilla/firefox
+
+# launch firefox
+firefox --no-remote --display=$DISPLAY &
+
+# wait (keep container alive)
+wait -n
+</code></pre>
+
+          <h3>3) Build & Run</h3>
+          <pre><code>docker build -t firefox-novnc .
+
+docker run -d --name firefox-novnc \
+  -p 6080:6080 -p 5901:5901 \
+  -v $(pwd)/profile:/home/firefoxuser/.mozilla/firefox \
+  firefox-novnc
+
+# Open http://localhost:6080 in your browser
+</code></pre>
+
+          <div class="note">
+            <strong>Security note:</strong> Don’t use the example password in production. Use a secure secret store, bind noVNC behind HTTPS, and restrict access (NGINX + basic auth or OAuth).
+          </div>
+
+          <h2 id="x11">X11 Forwarding (Linux host)</h2>
+          <p class="muted">If you run Linux, X11 forwarding offers lower latency. Typical approach mounts the host X socket and passes XAUTH.</p>
+          <pre><code># run with host X socket (from host terminal)
+docker run -it --rm \
+  -e DISPLAY=$DISPLAY \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  -v $HOME/.Xauthority:/home/firefoxuser/.Xauthority:ro \
+  --name firefox-x11 ubuntu:22.04 /bin/bash
+
+# inside container
+apt update && apt install -y firefox
+firefox &
+</code></pre>
+
+          <div class="note">Make sure you allow connections: <code>xhost +SI:localuser:root</code> (prefer limiting to a specific user).</div>
+
+          <h2 id="docker-compose">Docker Compose (recommended)</h2>
+          <pre><code>version: '3.8'
+services:
+  firefox:
+    build: .
+    ports:
+      - "6080:6080" # noVNC
+      - "5901:5901" # VNC
+    volumes:
+      - ./profile:/home/firefoxuser/.mozilla/firefox
+    restart: unless-stopped
+</code></pre>
+
+          <h2 id="advanced">Advanced Topics & Production Hardening</h2>
+          <div class="section-grid">
+            <div>
+              <h3>Spoofing & Isolation</h3>
+              <p class="muted">For stricter sandboxing, combine user namespaces, seccomp, and AppArmor/SELinux policies. Drop capabilities: <code>--cap-drop=ALL</code> and selectively add back only what's necessary.</p>
+            </div>
+            <div>
+              <h3>Secure noVNC (recommended)</h3>
+              <p class="muted">Place noVNC behind Nginx or Traefik with TLS termination. Add HTTP basic auth or OAuth to control access. Example Nginx snippet can be provided on request.</p>
+            </div>
+          </div>
+
+          <h3 id="selenium">Selenium / CI integration</h3>
+          <p class="muted">Use this container as a DISPLAY for headful Selenium tests. You can run Selenium tests against <code>http://localhost:4444</code> (Selenium grid) while using this image to visually inspect failing tests via VNC/noVNC.</p>
+
+          <h3 id="persist">Persistent Profiles</h3>
+          <p class="muted">Mount a host volume for <code>/home/firefoxuser/.mozilla/firefox</code> so cookies, extensions and preferences persist between runs. Backup profiles for repeatable testing.</p>
+
+          <h2 id="troubleshooting">Troubleshooting & Tips</h2>
+          <ul>
+            <li><strong>Black screen:</strong> Ensure fluxbox (or window manager) is running and viewport size matches VNC geometry.</li>
+            <li><strong>Firefox crashes:</strong> Run <code>firefox --safe-mode</code> inside container to rule out extensions.</li>
+            <li><strong>Audio:</strong> Use PulseAudio socket bind-mount to forward sound: <code>-v /run/user/1000/pulse:/run/pulse</code>.</li>
+            <li><strong>Performance:</strong> GUI is slower — use X11 on Linux hosts for better responsiveness.</li>
+          </ul>
+
+          <h2 id="extras">Extras: Windows & macOS users</h2>
+          <p class="muted">On Windows/macOS, use Docker Desktop. For best experience use noVNC (open via browser). For X11, use an X server like VcXsrv (Windows) or XQuartz (macOS) and bind the display as described earlier.</p>
+
+          <h2 id="wrap">Wrap-up & Next Steps</h2>
+          <p class="muted">This setup gives you a portable Firefox instance running inside a container with GUI access. It’s ideal for demo environments, sandboxed browsing, and visually debugging automated UI tests. I can:</p>
+          <ul>
+            <li>Generate a GitHub repo with files: <code>Dockerfile</code>, <code>start.sh</code>, <code>docker-compose.yml</code></li>
+            <li>Add Nginx + Let's Encrypt configuration to secure noVNC with HTTPS</li>
+            <li>Create a Selenium-ready image with geckodriver for CI pipelines</li>
+          </ul>
+
+          <div class="footer">Want any of those? Tell me which and I’ll generate the exact files ready for copy/paste or as a downloadable repo.</div>
+        </article>
+      </main>
+
+      <aside class="toc card">
+        <div class="toc">
+          <h3>Contents</h3>
+          <ul>
+            <li><a href="#intro">Introduction</a></li>
+            <li><a href="#quick-start">Quick Start (noVNC)</a></li>
+            <li><a href="#x11">X11 Forwarding</a></li>
+            <li><a href="#docker-compose">Docker Compose</a></li>
+            <li><a href="#advanced">Advanced Topics</a></li>
+            <li><a href="#selenium">Selenium / CI</a></li>
+            <li><a href="#troubleshooting">Troubleshooting</a></li>
+            <li><a href="#extras">Windows & macOS</a></li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>
