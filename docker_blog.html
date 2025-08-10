@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Why Companies Use Docker — Case Studies & Benefits</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
+    .hero-bg { background: linear-gradient(90deg, rgba(59,130,246,0.08), rgba(99,102,241,0.04)); }
+    .card-shadow { box-shadow: 0 6px 18px rgba(15,23,42,0.06); }
+    pre { background:#0f172a; color:#e6edf3; padding:1rem; border-radius:8px; overflow:auto; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+  <header class="hero-bg py-12">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="flex items-center justify-between">
+        <h1 class="text-3xl md:text-4xl font-extrabold">Why Companies Use <span class="text-indigo-600">Docker</span></h1>
+        <nav class="space-x-4 text-sm text-gray-600">
+          <a href="#case-studies" class="hover:text-indigo-600">Case Studies</a>
+          <a href="#benefits" class="hover:text-indigo-600">Benefits</a>
+          <a href="#conclusion" class="hover:text-indigo-600">Conclusion</a>
+        </nav>
+      </div>
+      <p class="mt-6 max-w-3xl text-gray-600">A concise, research-backed case study collection: real companies, real challenges, and how containerization with Docker delivered concrete business outcomes.</p>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 -mt-8">
+    <section class="bg-white p-8 rounded-2xl card-shadow">
+      <div class="md:flex md:items-center md:justify-between">
+        <div>
+          <h2 class="text-2xl font-semibold">Overview</h2>
+          <p class="mt-3 text-gray-600">Containers let teams package apps and dependencies together so they run consistently across environments. Below we examine how leading companies applied Docker to solve scaling, deployment speed, developer productivity, and portability problems.</p>
+        </div>
+        <div class="mt-6 md:mt-0">
+          <a class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-500" href="#case-studies">Explore Case Studies</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="case-studies" class="mt-8 grid gap-6 md:grid-cols-2">
+
+      <!-- PayPal -->
+      <article class="bg-white p-6 rounded-xl card-shadow">
+        <h3 class="text-xl font-semibold">PayPal — Large-scale container migration</h3>
+        <p class="mt-2 text-gray-600">Challenge: Modernize legacy applications and increase developer velocity. Approach: Massive migration to containers and a unified container platform. Outcome: Significant increase in deployment consistency and developer productivity.</p>
+        <details class="mt-4">
+          <summary class="font-medium text-indigo-600 cursor-pointer">Key outcomes & metrics</summary>
+          <ul class="mt-3 list-disc list-inside text-gray-600">
+            <li>Wide application containerization across the portfolio.</li>
+            <li>Improved CI/CD flow and faster testing/deployment iteration.</li>
+          </ul>
+        </details>
+      </article>
+
+      <!-- Netflix -->
+      <article class="bg-white p-6 rounded-xl card-shadow">
+        <h3 class="text-xl font-semibold">Netflix — Container platform engineering</h3>
+        <p class="mt-2 text-gray-600">Challenge: Run thousands of microservices at global scale with predictable performance. Approach: Build and operate a dedicated container platform and tailor resource isolation. Outcome: Better resource utilization and more predictable performance for microservices.</p>
+        <details class="mt-4">
+          <summary class="font-medium text-indigo-600 cursor-pointer">Engineering highlights</summary>
+          <p class="mt-3 text-gray-600">Netflix developed a container platform with features like CPU isolation tuned for their workload patterns.</p>
+        </details>
+      </article>
+
+      <!-- Spotify -->
+      <article class="bg-white p-6 rounded-xl card-shadow">
+        <h3 class="text-xl font-semibold">Spotify — From Helios to Cloud-native orchestration</h3>
+        <p class="mt-2 text-gray-600">Challenge: Scale a microservice fleet and improve operational efficiency. Approach: Adopt Docker containers early, integrate them into end-to-end CI/CD and later migrate orchestration to community tools. Outcome: Repeatable deployments and smoother platform transitions.</p>
+        <details class="mt-4">
+          <summary class="font-medium text-indigo-600 cursor-pointer">Operational gains</summary>
+          <p class="mt-3 text-gray-600">Containers allowed Spotify to pass the same artifact from dev to production, reducing environment-specific issues.</p>
+        </details>
+      </article>
+
+      <!-- Shopify -->
+      <article class="bg-white p-6 rounded-xl card-shadow">
+        <h3 class="text-xl font-semibold">Shopify — Containerized data center at scale</h3>
+        <p class="mt-2 text-gray-600">Challenge: Serve thousands of merchants reliably across heavy traffic. Approach: Move core services into containerized workflows to unify builds and runtime. Outcome: More consistent deployments, simpler scaling, and operational standardization.</p>
+        <details class="mt-4">
+          <summary class="font-medium text-indigo-600 cursor-pointer">Why it mattered</summary>
+          <p class="mt-3 text-gray-600">Containerization helped Shopify standardize service packaging and reduce friction between development and ops teams.</p>
+        </details>
+      </article>
+
+    </section>
+
+    <section id="benefits" class="mt-8 bg-white p-8 rounded-2xl card-shadow">
+      <h2 class="text-2xl font-semibold">Common benefits companies gain from Docker</h2>
+      <div class="mt-4 grid gap-4 md:grid-cols-3">
+        <div class="p-4 border rounded-lg">
+          <h4 class="font-semibold">Portability</h4>
+          <p class="text-gray-600 mt-2">Containers encapsulate apps + dependencies so the same image runs from dev to prod, and across clouds.</p>
+        </div>
+        <div class="p-4 border rounded-lg">
+          <h4 class="font-semibold">Faster deployments</h4>
+          <p class="text-gray-600 mt-2">Immutable images and better CI/CD integration speed up build-test-deploy cycles.</p>
+        </div>
+        <div class="p-4 border rounded-lg">
+          <h4 class="font-semibold">Resource efficiency</h4>
+          <p class="text-gray-600 mt-2">Containers have lower overhead than full VMs, enabling denser packing of services on hosts.</p>
+        </div>
+        <div class="p-4 border rounded-lg">
+          <h4 class="font-semibold">Developer productivity</h4>
+          <p class="text-gray-600 mt-2">Standardized environments reduce "it works on my machine" issues and simplify onboarding.</p>
+        </div>
+        <div class="p-4 border rounded-lg">
+          <h4 class="font-semibold">Operational consistency</h4>
+          <p class="text-gray-600 mt-2">Teams can centralize logging, monitoring, and security policies around container images and runtimes.</p>
+        </div>
+        <div class="p-4 border rounded-lg">
+          <h4 class="font-semibold">Scalability</h4>
+          <p class="text-gray-600 mt-2">Containers make horizontal scaling and microservice-based scaling patterns simpler to implement.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="code-sample" class="mt-8 bg-white p-8 rounded-2xl card-shadow">
+      <h2 class="text-2xl font-semibold">Quick Dockerfile & CI snippet</h2>
+      <p class="mt-3 text-gray-600">A concise example you can reuse in a microservice repo.</p>
+      <pre class="mt-4"># Dockerfile
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+CMD ["node","index.js"]
+
+# GitHub Actions workflow (deploy on push)
+name: CI
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build image
+        run: |
+          docker build -t myorg/myservice:${{ github.sha }} .
+</pre>
+    </section>
+
+    <section id="conclusion" class="mt-8 p-8 rounded-2xl bg-white card-shadow">
+      <h2 class="text-2xl font-semibold">Conclusion</h2>
+      <p class="mt-3 text-gray-600">Docker is not a silver bullet, but for many companies it unlocked measurable gains: faster delivery, reproducible environments, and operational standardization. The biggest wins come when Docker is combined with robust CI/CD, observability, and a scalable orchestration layer.</p>
+      <div class="mt-6 flex items-center justify-between">
+        <div>
+          <a class="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-500" href="#">Download PDF</a>
+        </div>
+        <div class="text-sm text-gray-500">Want this as a template or a blog CMS-ready page? I can convert it to React/Next.js, add SEO meta, or wire up a CMS.</div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="mt-12 py-6 text-center text-gray-500 text-sm">
+    © 2025 — Docker Case Study Blog • Built with care
+  </footer>
+
+</body>
+</html>
